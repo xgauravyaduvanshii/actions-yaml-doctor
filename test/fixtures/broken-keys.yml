@@ -1,0 +1,21 @@
+name: Broken keys
+
+on:
+  push:
+    branch: [main]
+  pull_request:
+
+jobs:
+  test:
+    run-on: windows-95
+    steps:
+      - runn: npm test
+      - uses: actions/checkout@v4
+
+  empty-job:
+    runs-on: ubuntu-latest
+
+  bad-runner:
+    runs-on: windows-95
+    steps:
+      - run: echo hi

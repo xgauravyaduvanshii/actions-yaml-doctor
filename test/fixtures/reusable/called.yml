@@ -1,0 +1,23 @@
+name: Called workflow
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        required: true
+      deploy:
+        type: boolean
+        required: false
+        default: false
+      region:
+        type: choice
+        required: false
+        default: us-east-1
+        options: [us-east-1, eu-west-1]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "deploying to ${{ inputs.environment }}"

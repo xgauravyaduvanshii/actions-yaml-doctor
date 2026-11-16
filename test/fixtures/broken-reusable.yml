@@ -1,0 +1,13 @@
+name: Broken reusable
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  call:
+    uses: ./reusable/called.yml
+    with:
+      deploy: maybe
+      region: mars
+      extra-input: true

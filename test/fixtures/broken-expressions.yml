@@ -1,0 +1,18 @@
+name: Broken expressions
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Unclosed
+        run: echo "${{ github.ref }"
+      - name: Empty
+        run: echo "${{ }}"
+      - name: Unknown context
+        run: echo "${{ foo.bar }}"
+      - name: Good one
+        run: echo "${{ github.ref_name }}"
