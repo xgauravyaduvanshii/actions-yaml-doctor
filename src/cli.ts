@@ -4,7 +4,7 @@ import { join, resolve } from 'node:path';
 import { checkWorkflow } from './parse.js';
 import type { Finding } from './parse.js';
 
-const VERSION = '0.1.0';
+const VERSION = '0.2.0';
 
 interface Options {
   fix: boolean;
@@ -35,6 +35,13 @@ Options:
   --strict               warnings also fail the build (exit 1)
   --help, -h             show this help
   --version              show the version
+
+Checks (v0.2.0): workflow keys/triggers/runners, expressions, secret
+typos, reusable-workflow inputs, action versions (mutable refs and
+outdated majors, offline list), strategy.matrix (empty / non-list /
+unused keys), and composite action files (action.yml — inputs, outputs,
+runs.steps). A file can opt out of the unpinned-action warning only with
+a '# actions-doctor: ignore action-unpinned' comment in the file.
 
 Exit code: 0 when there are no errors, 1 otherwise.
 Honest note: actionlint (github.com/rhysd/actionlint) already does this

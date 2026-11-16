@@ -1,0 +1,21 @@
+name: Broken composite
+
+bogus-top: true
+
+inputs:
+  token:
+    required: true
+  bad-input:
+    required: true
+    bogus: true
+outputs:
+  result:
+    value: ${{ steps.out.outputs.result }}
+runs:
+  using: composite
+  steps:
+    - id: out
+      run: echo "result=ok" >> "$GITHUB_OUTPUT"
+      shell: bash
+    - uses: actions/checkout@v3
+    - name: Bad step

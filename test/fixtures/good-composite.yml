@@ -1,0 +1,18 @@
+name: Good composite
+description: A good composite action that says hello.
+
+inputs:
+  who:
+    description: Who to greet.
+    required: false
+    default: world
+outputs:
+  greeting:
+    description: The greeting that was printed.
+    value: ${{ steps.out.outputs.greeting }}
+runs:
+  using: composite
+  steps:
+    - id: out
+      run: echo "greeting=Hello, ${{ inputs.who }}" >> "$GITHUB_OUTPUT"
+      shell: bash

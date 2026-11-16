@@ -24,6 +24,9 @@ Honest note: this problem is not new, and this tool is not the best at it. [`act
 - **Expression checks** — unclosed `${{ … }}`, empty `${{ }}`, and unknown contexts like `${{ foo.bar }}`.
 - **Secrets typo check** — `secrets.DEPLOY_TOKN` against the names you declare (`--secrets DEPLOY_TOKEN,API_KEY`, or the secrets your own `workflow_call` declares). `secrets.GITHUB_TOKEN` is always allowed. With no known-secret list it stays silent instead of guessing — a checker that cries wolf is worse than none.
 - **Reusable workflows** — calls to a local reusable workflow are checked against the callee's `workflow_call` inputs: missing required inputs, unknown inputs, wrong types (`boolean` / `number` / `choice`). Remote `owner/repo` reusable workflows cannot be checked offline and are skipped, not guessed at.
+- **Action versions (v0.2.0)** — a step pinned to a mutable ref (`actions/checkout@v4`, `actions/setup-node@main`, or no ref at all) gets a warning suggesting a full commit SHA; a known action on an outdated major (`actions/checkout@v3` when v4 is latest) gets a warning to upgrade. Fully offline: the latest-major list is a snapshot in `src/rules/actions.ts` (Nov 2026) and can go stale — when it does, the outdated check simply stops flagging that action until the list is updated. A full 40-character SHA is always clean. A file can opt out of the unpinned warning only with a `# actions-doctor: ignore action-unpinned` comment (this repo's own `ci.yml` uses it, because it intentionally tracks `@v4`); the outdated warning is never suppressed by it.
+- **Matrix validation (v0.2.0)** — `strategy.matrix` keys must be non-empty lists (an empty list or a bare string like `arch: x64` is an error), `include` / `exclude` must be lists of mappings, and a key never referenced as `${{ matrix.<key> }}` anywhere in its job gets an unused-key warning.
+- **Composite actions (v0.2.0)** — `action.yml` files are detected (a top-level `runs:` mapping, no `on:` / `jobs:`) and checked with the same step rules: unknown top-level / input / output / `runs` keys, missing `name` / `description`, inputs without a `description`, outputs without a `description` or `value`, and `runs.steps` problems. Expression, secret and action-version checks still apply inside composite steps. Non-composite (`node20` / `docker`) action files get the shared inputs/outputs checks only.
 - **`--fix`** — only for safe, unambiguous fixes, e.g. `branch:` → `branches:` and `run-on:` → `runs-on:`. Everything else is a suggestion you apply yourself.
 - **CI output** — `--json`, and `--format annotations` which prints `::error file=…,line=…::…` lines GitHub shows inline on a pull request.
 - **Zero runtime dependencies** beyond the `yaml` parser. Node.js 18+, TypeScript.
@@ -83,11 +86,23 @@ node dist/cli.js check test/fixtures/broken-secrets.yml --secrets DEPLOY_TOKEN,A
 
 # Fails (exit 1) — reusable workflow: missing required input, wrong type, bad choice
 node dist/cli.js check test/fixtures/broken-reusable.yml
+
+# Warnings, exit 0 — mutable refs, a missing ref, and an outdated major
+node dist/cli.js check test/fixtures/broken-actions.yml
+
+# Fails (exit 1) — empty matrix list, a non-list value, unused keys
+node dist/cli.js check test/fixtures/broken-matrix.yml
+
+# Passes (exit 0)
+node dist/cli.js check test/fixtures/good-composite.yml
+
+# Fails (exit 1) — missing description, input/output problems, a bad step
+node dist/cli.js check test/fixtures/broken-composite.yml
 ```
 
 ## What it does not do
 
-- It does not run your workflows, call the GitHub API, or check whether an action version (`actions/checkout@v4`) exists — it is fully offline by design.
+- It does not run your workflows, call the GitHub API, or check whether an action version (`actions/checkout@v4`) exists — it is fully offline by design. The outdated-major list is a snapshot that can go stale; it never claims a SHA matches a release.
 - It does not check shell scripts inside `run:` steps.
 - It does not auto-fix anything ambiguous. If a fix could change what your workflow does, it stays a suggestion.
 

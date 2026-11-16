@@ -1,0 +1,23 @@
+name: Broken actions
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      # Outdated major (latest is v4) and a mutable tag.
+      - uses: actions/checkout@v3
+      # Mutable branch ref, no version to compare.
+      - uses: actions/setup-node@main
+      # Latest major, but still a mutable tag.
+      - uses: docker/build-push-action@v6
+      # No ref at all.
+      - uses: actions/cache
+      # Pinned by full SHA — clean. (Placeholder SHA, format only.)
+      - uses: actions/upload-artifact@a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2
+        with:
+          name: build
+          path: dist

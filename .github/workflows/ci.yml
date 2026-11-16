@@ -1,3 +1,5 @@
+# actions-doctor: ignore action-unpinned
+# This repo intentionally tracks the @v4 tags for checkout/setup-node.
 name: CI
 
 on:

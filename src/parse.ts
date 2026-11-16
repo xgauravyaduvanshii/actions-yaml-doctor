@@ -4,6 +4,9 @@ import { checkKeys } from './rules/keys.js';
 import { checkExpressions } from './rules/expressions.js';
 import { checkSecrets } from './rules/secrets.js';
 import { checkReusable } from './rules/reusable.js';
+import { checkActions } from './rules/actions.js';
+import { checkMatrix } from './rules/matrix.js';
+import { checkActionFile, isActionFile } from './rules/composite.js';
 
 export type Severity = 'error' | 'warning';
 
@@ -152,6 +155,10 @@ export interface CheckOptions {
 /**
  * Run every rule over one workflow file. Returns findings sorted by line.
  * Syntax errors short-circuit: nothing else can be trusted after them.
+ * Action definition files (`action.yml` — a top-level `runs:` mapping and
+ * no `on:` / `jobs:`) take the action-file path instead of the workflow
+ * path: composite steps, inputs and outputs are checked, and the
+ * expression / secret / action-version rules still apply to them.
  */
 export function checkWorkflow(text: string, file: string, options: CheckOptions = {}): Finding[] {
   const parsed = parseWorkflow(text, file);
@@ -165,11 +172,18 @@ export function checkWorkflow(text: string, file: string, options: CheckOptions 
       message: 'This workflow file is empty or does not contain a YAML mapping.',
     }];
   }
-  const findings = [
-    ...checkKeys(parsed),
+  const shared = [
     ...checkExpressions(parsed),
     ...checkSecrets(parsed, options.knownSecrets ?? []),
-    ...checkReusable(parsed),
+    ...checkActions(parsed),
   ];
+  const findings = isActionFile(parsed.data)
+    ? [...checkActionFile(parsed), ...shared]
+    : [
+        ...checkKeys(parsed),
+        ...checkReusable(parsed),
+        ...checkMatrix(parsed),
+        ...shared,
+      ];
   return findings.sort((a, b) => a.line - b.line || (a.column ?? 0) - (b.column ?? 0));
 }

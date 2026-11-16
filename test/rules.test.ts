@@ -27,9 +27,12 @@ describe('suggest', () => {
 });
 
 describe('good workflow', () => {
-  it('passes with no findings', () => {
+  it('passes with no errors — only the two unpinned-action warnings for its @v4 tags', () => {
     const findings = checkWorkflow(fixture('good.yml'), 'good.yml');
-    expect(findings).toEqual([]);
+    expect(findings.filter((f) => f.severity === 'error')).toEqual([]);
+    const unpinned = findings.filter((f) => f.rule === 'action-unpinned');
+    expect(unpinned).toHaveLength(2); // actions/checkout@v4, actions/setup-node@v4
+    expect(unpinned.every((f) => f.severity === 'warning')).toBe(true);
   });
 });
 
@@ -108,7 +111,7 @@ describe('secrets', () => {
 
   it('never flags the built-in GITHUB_TOKEN', () => {
     const findings = checkWorkflow(fixture('good.yml'), 'good.yml', { knownSecrets: [] });
-    expect(findings).toEqual([]);
+    expect(findings.filter((f) => f.rule === 'unknown-secret')).toEqual([]);
   });
 });
 

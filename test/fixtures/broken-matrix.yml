@@ -1,0 +1,19 @@
+name: Broken matrix
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: ['18', '20']
+        python: []
+        arch: x64
+        unused-key: [a, b]
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "node ${{ matrix.node }} python ${{ matrix.python }}"
